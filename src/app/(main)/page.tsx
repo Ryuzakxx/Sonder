@@ -2,23 +2,34 @@ import { AppShell } from "@/components/layout";
 import { CompatibilityCard } from "@/features/compatibility";
 import { CollectionSection, getFeaturedCollections } from "@/features/lists";
 import { MediaShowcase, getFeaturedMedia } from "@/features/media";
-import { ProfileHero, getProfile } from "@/features/profile";
+import { ProfileHero, getProfile, getProfileLog, getProfileTimeline } from "@/features/profile";
 import { UniversalSearch, getSearchIndex } from "@/features/search";
 import { FeedSection, TimelineSection, getFeedItems, getTimelineItems } from "@/features/social";
 
 export default async function HomePage() {
-  const [profile, feedItems, searchItems, featuredMedia, collections, timelineItems] = await Promise.all([
+  const [
+    profile,
+    log,
+    timeline,
+    feedItems,
+    searchItems,
+    featuredMedia,
+    collections,
+    timelineItems,
+  ] = await Promise.all([
     getProfile(),
+    getProfileLog(),
+    getProfileTimeline(),
     getFeedItems(),
     getSearchIndex(),
     getFeaturedMedia(),
     getFeaturedCollections(),
-    getTimelineItems()
+    getTimelineItems(),
   ]);
 
   return (
     <AppShell>
-      <ProfileHero profile={profile} />
+      <ProfileHero profile={profile} log={log} timeline={timeline} />
       <div className="main-grid">
         <div className="content-stack">
           <FeedSection items={feedItems} />
