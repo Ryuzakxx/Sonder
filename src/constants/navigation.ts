@@ -1,7 +1,6 @@
 export const navigationItems = [
-  { href: "#profilo", label: "Profilo" },
-  { href: "#feed", label: "Feed" },
-  { href: "#ricerca", label: "Ricerca" },
-  { href: "#media", label: "Media" },
-  { href: "#liste", label: "Liste" }
+  { href: "/feed", label: "Feed" },
+  { href: "/search", label: "Ricerca" },
+  { href: "/lists", label: "Liste" },
+  { href: "/profile/ryuzakxx", label: "Profilo" }
 ] as const;
