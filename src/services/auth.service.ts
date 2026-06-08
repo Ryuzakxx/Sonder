@@ -1,24 +1,25 @@
 import { createClient } from "@/lib/supabase/client";
-import { profileService } from "./profile.service";
 
 export const authService = {
-  async signUp(email: string, password: string, username: string) {
+  async signUp(email: string, password: string, username?: string) {
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username } },
+      options: {
+        data: { username: username ?? email.split("@")[0] },
+      },
     });
     if (error) throw error;
-    if (data.user) {
-      await profileService.bootstrapProfile(data.user.id, email, username);
-    }
     return data;
   },
 
   async signIn(email: string, password: string) {
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) throw error;
     return data;
   },
@@ -31,12 +32,15 @@ export const authService = {
 
   async getSession() {
     const supabase = createClient();
-    const { data } = await supabase.auth.getSession();
-    return data.session;
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return session;
   },
 
-  onAuthStateChange(callback: Parameters<ReturnType<typeof createClient>["auth"]["onAuthStateChange"]>[0]) {
+  async getUser() {
     const supabase = createClient();
-    return supabase.auth.onAuthStateChange(callback);
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return user;
   },
 };
