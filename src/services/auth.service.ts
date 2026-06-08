@@ -1,46 +1,16 @@
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 export const authService = {
   async signUp(email: string, password: string, username?: string) {
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username: username ?? email.split("@")[0] },
-      },
-    });
-    if (error) throw error;
-    return data;
+    return supabase.auth.signUp(email, password, { username: username ?? email.split("@")[0] });
   },
-
   async signIn(email: string, password: string) {
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-    return data;
+    return supabase.auth.signIn(email, password);
   },
-
   async signOut() {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    return supabase.auth.signOut();
   },
-
-  async getSession() {
-    const supabase = createClient();
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return session;
-  },
-
   async getUser() {
-    const supabase = createClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return user;
+    return supabase.auth.getUser();
   },
 };

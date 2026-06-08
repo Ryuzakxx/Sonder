@@ -1,48 +1,65 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import type { Session, User } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
+import { supabase } from "@/lib/supabase/client";
+
+interface SupabaseUser {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, string>;
+}
 
 interface AuthContextValue {
-  user: User | null;
-  session: Session | null;
+  user: SupabaseUser | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, meta?: Record<string, unknown>) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
-  session: null,
   loading: true,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
 });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getUser().then((u) => {
+      setUser(u as SupabaseUser | null);
       setLoading(false);
     });
+  }, []);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { user } = await supabase.auth.signIn(email, password);
+    setUser(user as SupabaseUser);
+  }, []);
 
-    return () => subscription.unsubscribe();
+  const signUp = useCallback(async (email: string, password: string, meta?: Record<string, unknown>) => {
+    const { user } = await supabase.auth.signUp(email, password, meta);
+    setUser(user as SupabaseUser);
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
