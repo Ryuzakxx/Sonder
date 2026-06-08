@@ -1,2 +1,1 @@
-export * from "./AppShell";
-export * from "./TopNavigation";
+export { Navbar } from "./Navbar";

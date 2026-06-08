@@ -1,23 +1,23 @@
-import { AppShell } from "@/components/layout";
-import { ProfileClient } from "@/features/profile";
-import { MOCK_PROFILE, PROFILE_LOG, PROFILE_TIMELINE } from "@/lib/mock-data";
+import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { ProfilePageClient } from "@/features/profile/ProfilePageClient";
+import { notFound } from "next/navigation";
 
-type ProfilePageProps = {
-  params: Promise<{ username: string }>;
-};
-
-export default async function ProfilePage({ params }: ProfilePageProps) {
+export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
-  // In futuro: fetch dati reali per username da DB
-  void username;
+  return { title: `@${username}` };
+}
 
-  return (
-    <AppShell>
-      <ProfileClient
-        profile={MOCK_PROFILE}
-        log={PROFILE_LOG}
-        timeline={PROFILE_TIMELINE}
-      />
-    </AppShell>
-  );
+export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
+  const { username } = await params;
+  const supabase = await createClient();
+  const { data: profile } = await supabase.from("profiles").select("*").eq("username", username).single();
+  if (!profile) notFound();
+
+  const [{ data: reviews }, { data: activities }] = await Promise.all([
+    supabase.from("reviews").select("*").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(20),
+    supabase.from("activities").select("*").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(30),
+  ]);
+
+  return <ProfilePageClient profile={profile} reviews={reviews ?? []} activities={activities ?? []} />;
 }

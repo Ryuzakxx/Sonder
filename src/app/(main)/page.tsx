@@ -1,47 +1,19 @@
-import { AppShell } from "@/components/layout";
-import { CompatibilityCard } from "@/features/compatibility";
-import { CollectionSection, getFeaturedCollections } from "@/features/lists";
-import { MediaShowcase, getFeaturedMedia } from "@/features/media";
-import { ProfileHero, getProfile, getProfileLog, getProfileTimeline } from "@/features/profile";
-import { UniversalSearch, getSearchIndex } from "@/features/search";
-import { FeedSection, TimelineSection, getFeedItems, getTimelineItems } from "@/features/social";
+import type { Metadata } from "next";
+import { FeedSection } from "@/components/feed/FeedSection";
+import { TrendingSidebar } from "@/components/sidebar/TrendingSidebar";
 
-export default async function HomePage() {
-  const [
-    profile,
-    log,
-    timeline,
-    feedItems,
-    searchItems,
-    featuredMedia,
-    collections,
-    timelineItems,
-  ] = await Promise.all([
-    getProfile(),
-    getProfileLog(),
-    getProfileTimeline(),
-    getFeedItems(),
-    getSearchIndex(),
-    getFeaturedMedia(),
-    getFeaturedCollections(),
-    getTimelineItems(),
-  ]);
+export const metadata: Metadata = { title: "Home" };
 
+export default function HomePage() {
   return (
-    <AppShell>
-      <ProfileHero profile={profile} log={log} timeline={timeline} />
-      <div className="main-grid">
-        <div className="content-stack">
-          <FeedSection items={feedItems} />
-          <MediaShowcase media={featuredMedia} />
-          <CollectionSection collections={collections} />
-        </div>
-        <aside className="sidebar-stack">
-          <UniversalSearch items={searchItems} />
-          <CompatibilityCard profile={profile} />
-          <TimelineSection items={timelineItems} />
-        </aside>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+      <div>
+        <h1 className="text-xl font-semibold text-white mb-5">Feed</h1>
+        <FeedSection />
       </div>
-    </AppShell>
+      <aside className="hidden lg:block">
+        <TrendingSidebar />
+      </aside>
+    </div>
   );
 }

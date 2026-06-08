@@ -1,10 +1,8 @@
-import { AppShell } from "@/components/layout";
-import { SearchInterface } from "@/features/search";
+import type { Metadata } from "next";
+import { SearchPage } from "@/features/search/SearchPage";
 
-export default function SearchPage() {
-  return (
-    <AppShell>
-      <SearchInterface />
-    </AppShell>
-  );
+export const metadata: Metadata = { title: "Scopri" };
+
+export default function DiscoverPage() {
+  return <SearchPage />;
 }

@@ -1,85 +1,35 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
-import type { SearchResults, SearchCategory } from "@/services/search";
+import { useState, useEffect, useCallback } from "react";
+import { searchService } from "@/services/search.service";
+import type { MediaSearchResult } from "@/types";
 
-const DEBOUNCE_MS = 350;
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
-type UseSearchReturn = {
-  query: string;
-  setQuery: (q: string) => void;
-  category: SearchCategory;
-  setCategory: (c: SearchCategory) => void;
-  results: SearchResults;
-  isLoading: boolean;
-  error: string | null;
-  isEmpty: boolean;
-  hasQuery: boolean;
-};
+export function useSearch(query: string) {
+  const [results, setResults] = useState<{ films: MediaSearchResult[]; serie: MediaSearchResult[]; libri: MediaSearchResult[] }>({
+    films: [], serie: [], libri: [],
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const debouncedQuery = useDebounce(query, 300);
 
-const EMPTY_RESULTS: SearchResults = { film: [], serie: [], libri: [] };
-
-export function useSearch(): UseSearchReturn {
-  const [query, setQuery]       = useState("");
-  const [category, setCategory] = useState<SearchCategory>("tutto");
-  const [results, setResults]   = useState<SearchResults>(EMPTY_RESULTS);
-  const [isLoading, setLoading] = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-
-  const abortRef  = useRef<AbortController | null>(null);
-  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const fetchResults = useCallback(async (q: string, cat: SearchCategory) => {
-    if (abortRef.current) abortRef.current.abort();
-    abortRef.current = new AbortController();
-
-    setLoading(true);
-    setError(null);
-
+  const fetchResults = useCallback(async (q: string) => {
+    if (!q.trim()) { setResults({ films: [], serie: [], libri: [] }); return; }
+    setIsLoading(true);
     try {
-      const res = await fetch(
-        `/api/search?q=${encodeURIComponent(q)}&type=${cat}`,
-        { signal: abortRef.current.signal }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: SearchResults = await res.json();
+      const data = await searchService.search(q);
       setResults(data);
-    } catch (err) {
-      if ((err as Error).name === "AbortError") return;
-      setError("Errore durante la ricerca. Riprova.");
-      setResults(EMPTY_RESULTS);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setResults({ films: [], serie: [], libri: [] }); }
+    finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+  useEffect(() => { fetchResults(debouncedQuery); }, [debouncedQuery, fetchResults]);
 
-    if (!query.trim() || query.length < 2) {
-      setResults(EMPTY_RESULTS);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    timerRef.current = setTimeout(() => {
-      fetchResults(query, category);
-    }, DEBOUNCE_MS);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [query, category, fetchResults]);
-
-  const total = results.film.length + results.serie.length + results.libri.length;
-
-  return {
-    query, setQuery,
-    category, setCategory,
-    results,
-    isLoading,
-    error,
-    isEmpty: !isLoading && query.length >= 2 && total === 0,
-    hasQuery: query.length >= 2,
-  };
+  return { results, isLoading };
 }
