@@ -1,12 +1,12 @@
-import { Navbar } from "@/components/layout";
-import { SearchOverlay } from "@/components/search/SearchOverlay";
+import { Navbar } from "@/components/layout/Navbar";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-white">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <Navbar />
-      <SearchOverlay />
-      <main className="max-w-5xl mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-5xl mx-auto px-4 py-8">
+        {children}
+      </main>
     </div>
   );
 }
